@@ -1,4 +1,7 @@
 <resources>
-    <string name="app_name">CS 310</string>
-    <string name="my_name">Guhan</string>
+    <string name="app_name">CS 310     Guhan Mayazhagu</string>
+    <string name="flag">🚩</string>
+    <string name="flag_count">11</string>
+    <string name="mine">💣</string>
+    <string name="mine_count">11</string>
 </resources>
