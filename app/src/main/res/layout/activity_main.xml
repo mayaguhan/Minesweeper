@@ -6,13 +6,100 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="100dp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:gravity="center_horizontal"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:id="@+id/flag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="15dp"
+            android:layout_marginBottom="2dp"
+            android:height="45dp"
+            android:width="45dp"
+            android:text="@string/flag"
+            android:textSize="32sp"
+            android:gravity="center"
+            />
+
+        <TextView
+            android:id="@+id/flagCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="50dp"
+            android:layout_marginBottom="2dp"
+            android:height="45dp"
+            android:width="45dp"
+            android:text="@string/flag_count"
+            android:layout_toRightOf="@id/flag"
+            android:textSize="32sp"
+            android:gravity="center"
+            />
+
+        <TextView
+            android:id="@+id/mine"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="15dp"
+            android:layout_marginBottom="2dp"
+            android:height="45dp"
+            android:width="45dp"
+            android:text="@string/mine"
+            android:textSize="32sp"
+            android:gravity="center"
+            />
+
+        <TextView
+            android:id="@+id/mineCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="2dp"
+            android:layout_marginBottom="2dp"
+            android:height="45dp"
+            android:width="45dp"
+            android:text="@string/mine_count"
+            android:textSize="32sp"
+            android:gravity="center"
+            />
+
+
+    </LinearLayout>
+
+    <GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/gridLayout01"
+        android:layout_width="212dp"
+        android:layout_height="264dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
+        android:layout_gravity="center"
+        android:rowCount="10"
+        android:columnCount="8"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+    </GridLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
