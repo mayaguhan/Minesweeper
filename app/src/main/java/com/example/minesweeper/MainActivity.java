@@ -203,7 +203,6 @@ public class MainActivity extends AppCompatActivity {
 
     // Function to check the number of mines while receiving row and col as input
     public int noOfMinesAroundCell(int i, int j){
-
         int sumOfMines = 0;
 
         for (int[] mine: mineArray){
