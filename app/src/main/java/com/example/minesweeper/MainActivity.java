@@ -27,6 +27,9 @@ public class MainActivity extends AppCompatActivity {
     // Array to save Mines
     private ArrayList<int[]> mineArray;
 
+    // Array to save Mine TVs
+    private ArrayList<TextView> mine_tvs;
+
     private int dpToPixel(int dp) {
         float density = Resources.getSystem().getDisplayMetrics().density;
         return Math.round(dp * density);
@@ -40,10 +43,16 @@ public class MainActivity extends AppCompatActivity {
         // Initialize new ArrayList
         cell_tvs = new ArrayList<TextView>();
 
+        // Initialize mine_tvs
+        mine_tvs = new ArrayList<TextView>();
+
         // Initialize grid layout. Retrieve using ID
         GridLayout grid = (GridLayout) findViewById(R.id.gridLayout01);
 
         LayoutInflater li = LayoutInflater.from(this);
+
+        // Generate mines for tiles and save it in an ArrayList
+        generateMines();
 
         for (int i = 0; i<10; i++) {
             for (int j=0; j<8; j++) {
@@ -57,53 +66,27 @@ public class MainActivity extends AppCompatActivity {
                 lp.rowSpec = GridLayout.spec(i);
                 lp.columnSpec = GridLayout.spec(j);
 
+                // Add TextView to the grid and to cell_tvs
                 grid.addView(tv, lp);
-
                 cell_tvs.add(tv);
+
+                // Check if the current cell is a mine and add it to a new ArrayList for checking later
+                if (this.checkIfMine(i,j)){
+                    mine_tvs.add(tv);
+                }
             }
         }
-
-        // Generate mines for tiles and save it in an ArrayList
-        generateMines();
-
-//        // Generate mines
-//        ArrayList<int[]> mineArray = generateMines();
-//
-//        for (int i=0; i<4; i++){
-//
-//            // Retrieve mine
-//
-//            System.out.println(mineArray.get(i));
-//            int[] currentMine = mineArray.get(i);
-//
-//            // Create TextView
-//            TextView tv = (TextView) li.inflate(R.layout.mine_cell_layout, grid, false);
-//            tv.setTextColor(Color.GRAY);
-//
-//            // TODO: Function will have to change to onClickMine
-//            tv.setOnClickListener(this::onClickTV);
-//
-//            GridLayout.LayoutParams lp = (GridLayout.LayoutParams) tv.getLayoutParams();
-//            lp.rowSpec = GridLayout.spec(currentMine[0]);
-//            lp.columnSpec = GridLayout.spec(currentMine[1]);
-//
-//            grid.addView(tv,lp);
-//
-//        }
     }
 
     public void onClickTV(View view){
-
-        // Check if mine is present. If mine is present --> mineHandler
-        // Else --> safeHandler
 
         TextView tv = (TextView) view;
         int n = findIndexOfCellTextView(tv);
         int i = n/COLUMN_COUNT;
         int j = n%COLUMN_COUNT;
 
-        // TODO: Insert if-else handler when mine is present vs absent
 
+        // Check if Mine is present
         int[] mine = new int[2];
         mine[0] = i;
         mine[1] = j;
@@ -111,22 +94,16 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("HEllo: " + mine[0] + mine[1]);
         Boolean minePresent = this.checkIfPresent(mine);
 
+        // Activate handlers depending on whether there is a mine or not
         if (minePresent){
-            this.mineHandler(tv, i, j);
+            this.mineHandler();
         } else {
-            tv.setText(String.valueOf(i)+String.valueOf(j));
-            if (tv.getCurrentTextColor() == Color.GRAY) {
-                tv.setTextColor(Color.GREEN);
-                tv.setBackgroundColor(Color.parseColor("lime"));
-            }else {
-                tv.setTextColor(Color.GRAY);
-                tv.setBackgroundColor(Color.LTGRAY);
-            }
-
+            this.emptyHandler(tv, i, j);
         }
     }
 
     private int findIndexOfCellTextView(TextView tv) {
+
         for (int n=0; n<cell_tvs.size(); n++) {
             if (cell_tvs.get(n) == tv)
                 return n;
@@ -167,6 +144,20 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("HELP:" + mineArray);
     }
 
+    // Function to check if the current cell is a mine
+    private Boolean checkIfMine(int i, int j){
+        for (int[] mine: mineArray){
+            int row = mine[0];
+            int col = mine[1];
+
+            if ((i == row) && (j == col)){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // Function to check if mine is present in selected square
     public Boolean checkIfPresent(int[] mine){
         int i = mine[0];
@@ -182,24 +173,52 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Function to handle when user clicks on mines
-    public void mineHandler(TextView view, int row, int col){
+    public void mineHandler(){
+        // TODO: End Game/Restart Game
 
-        // TODO: Expose all mines and end game.
-        view.setText("\uD83D\uDCA3");
-        if (view.getCurrentTextColor() == Color.GRAY) {
-            view.setTextColor(Color.GREEN);
-            view.setBackgroundColor(Color.parseColor("red"));
-        }else {
-            view.setTextColor(Color.GRAY);
-            view.setBackgroundColor(Color.LTGRAY);
+
+        for (TextView tv: mine_tvs){
+            tv.setText("\uD83D\uDCA3");
+            if (tv.getCurrentTextColor() == Color.GRAY) {
+                tv.setTextColor(Color.GREEN);
+                tv.setBackgroundColor(Color.parseColor("red"));
+            }
         }
-
-
-
     }
 
     // Function to handle when user clicks on safe spot
-    public void emptyHandler(){
+    public void emptyHandler(TextView tv, int i, int j){
+
         // TODO: Transitively reveal all adjacent cells
+
+        // Check the number of mines around cell
+        int noOfMines = noOfMinesAroundCell(i, j);
+
+        // Set the number to the no. of bombs around
+        tv.setText(Integer.toString(noOfMines));
+        tv.setTextColor(Color.GRAY);
+        tv.setBackgroundColor(Color.LTGRAY);
+
     }
+
+    // Function to check the number of mines while receiving row and col as input
+    public int noOfMinesAroundCell(int i, int j){
+
+        int sumOfMines = 0;
+
+        for (int[] mine: mineArray){
+            int row = mine[0];
+            int col = mine[1];
+
+            // Check if all directions have mines
+            if ((i == row) || (i+1 == row) || (i-1 == row)){
+                if ((j == col) || (j+1 == col) || (j-1 == col)){
+                    sumOfMines += 1;
+                }
+            }
+        }
+        return sumOfMines;
+
+    }
+
 }
