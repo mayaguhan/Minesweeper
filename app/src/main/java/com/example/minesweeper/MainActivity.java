@@ -2,9 +2,11 @@ package com.example.minesweeper;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.GridLayout;
@@ -43,6 +45,11 @@ public class MainActivity extends AppCompatActivity {
     // Hashmap to store what chosen cell's text was before changing it to flag
     private HashMap<TextView, String> storedText;
 
+    // Stopwatch timer to track how long user plays the game
+    private int clock = 0;
+    private boolean running = false;
+
+
     // To track mode of the game
     private String mode = "pick";
 
@@ -68,6 +75,12 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize HashMap to save TextView's string before
         storedText = new HashMap<TextView, String>();
+
+        // Stopwatch timer --> Check savedInstanceState
+        if (savedInstanceState != null) {
+            clock = savedInstanceState.getInt("clock");
+            running = savedInstanceState.getBoolean("running");
+        }
 
         // Initialize grid layout. Retrieve using ID
         GridLayout grid = (GridLayout) findViewById(R.id.gridLayout01);
@@ -136,6 +149,11 @@ public class MainActivity extends AppCompatActivity {
 
         TextView tv = (TextView) view;
 
+        if (!running){
+            running = true;
+            runTimer();
+        }
+
         if (this.mode == "pick") {
             System.out.println(tv.getId());
             int n = findIndexOfCellTextView(tv);
@@ -160,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
 
             // If flag is not present --> Add flag and add tv to selectedMines
-            if (tv.getText() != getString(R.string.flag)){
+            if (tv.getText() != getString(R.string.flag) && (cellStatus.get(tv) != "open")){
                 this.numFlags -= 1;
                 this.selectedMines.add(tv);
                 storedText.put(tv, (String) tv.getText());
@@ -174,20 +192,33 @@ public class MainActivity extends AppCompatActivity {
 
                 // Function to check if game is over
                 // TODO: Implement functionality to check if the game is over
-                if (checkGameOver()){
-                    //
+                if (checkGameWon() && numFlags == 0){
+                    Intent intent = new Intent(view.getContext(), EndGame.class);
+                    intent.putExtra("gameStatus", true);
+                    intent.putExtra("timer",clock);
+                    startActivity(intent);
                 }
             } else {
 
                 // If flag is present --> Remove flag and remove tv from selectedMines
-                this.numFlags += 1;
-                this.selectedMines.remove(tv);
-                tv.setText(storedText.get(tv));
-                tv.setBackgroundColor(Color.GRAY);
 
-                // Update FlagCount
-                TextView flagCount = findViewById(R.id.flagCount);
-                flagCount.setText(Integer.toString(this.numFlags));
+                if (cellStatus.get(tv) != "open"){
+                    this.numFlags += 1;
+                    this.selectedMines.remove(tv);
+                    tv.setText(storedText.get(tv));
+                    tv.setBackgroundColor(Color.GRAY);
+
+                    // Update FlagCount
+                    TextView flagCount = findViewById(R.id.flagCount);
+                    flagCount.setText(Integer.toString(this.numFlags));
+
+                    if (checkGameWon() && numFlags == 0){
+                        Intent intent = new Intent(view.getContext(), EndGame.class);
+                        intent.putExtra("gameStatus", true);
+                        intent.putExtra("timer",clock);
+                        startActivity(intent);
+                    }
+                }
             }
         }
     }
@@ -237,6 +268,15 @@ public class MainActivity extends AppCompatActivity {
                 tv.setBackgroundColor(Color.parseColor("red"));
             }
         }
+
+        // End Game. Game over
+
+        Intent intent = new Intent(this, EndGame.class);
+        intent.putExtra("gameStatus", false);
+        intent.putExtra("timer",clock);
+        startActivity(intent);
+
+
     }
 
     // Function to handle when user clicks on safe spot
@@ -495,7 +535,7 @@ public class MainActivity extends AppCompatActivity {
     // HELPER FUNCTIONS
 
     // Check if game is over
-    private boolean checkGameOver(){
+    private boolean checkGameWon(){
 
         int sum = 0;
 
@@ -594,5 +634,33 @@ public class MainActivity extends AppCompatActivity {
         }
         return -1;
     }
+
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putInt("clock", clock);
+        savedInstanceState.putBoolean("running", running);
+    }
+
+    // Stopwatch timer function
+    private void runTimer() {
+        final Handler handler = new Handler();
+        final TextView timerView = (TextView) findViewById(R.id.timerCount);
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                int seconds = clock%60;
+
+                clock = seconds;
+                timerView.setText(Integer.toString(clock));
+
+                if (running) {
+                    clock++;
+                }
+                handler.postDelayed(this, 1000);
+            }
+        });
+    }
+
 
 }

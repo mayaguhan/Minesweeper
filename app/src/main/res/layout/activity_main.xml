@@ -56,7 +56,7 @@
                 />
 
             <TextView
-                android:id="@+id/mine"
+                android:id="@+id/timer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="2dp"
@@ -71,7 +71,7 @@
                 />
 
             <TextView
-                android:id="@+id/mineCount"
+                android:id="@+id/timerCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="2dp"
@@ -80,7 +80,7 @@
                 android:layout_marginBottom="2dp"
                 android:height="45dp"
                 android:width="45dp"
-                android:text="@string/time_passed"
+                android:text="0"
                 android:textSize="32sp"
                 android:gravity="center"
                 />
