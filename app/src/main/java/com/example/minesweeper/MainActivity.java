@@ -13,10 +13,14 @@ import android.widget.TextView;
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
+
+
+    // TODO: Separate code to another class. Initialize with num rows, cols and mines
 
     // Column count to derive position later
     private static final int COLUMN_COUNT = 8;
@@ -24,16 +28,26 @@ public class MainActivity extends AppCompatActivity {
     // Array to save TVs
     private ArrayList<TextView> cell_tvs;
 
+    // Hashmap to check status of cell (Open/Close)
+    private HashMap<TextView, String> cellStatus = new HashMap<TextView, String>();
+
     // Array to save Mines
     private ArrayList<int[]> mineArray;
 
     // Array to save Mine TVs
     private ArrayList<TextView> mine_tvs;
 
-    private int dpToPixel(int dp) {
-        float density = Resources.getSystem().getDisplayMetrics().density;
-        return Math.round(dp * density);
-    }
+    // Array to save chosen cells as flags
+    private ArrayList<TextView> selectedMines;
+
+    // Hashmap to store what chosen cell's text was before changing it to flag
+    private HashMap<TextView, String> storedText;
+
+    // To track mode of the game
+    private String mode = "pick";
+
+    // Track the number of flags
+    int numFlags = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +59,15 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize mine_tvs
         mine_tvs = new ArrayList<TextView>();
+
+        // Initialize hashmap
+        cellStatus = new HashMap<TextView, String>();
+
+        // Initialize ArrayList to save chosen mines
+        selectedMines = new ArrayList<TextView>();
+
+        // Initialize HashMap to save TextView's string before
+        storedText = new HashMap<TextView, String>();
 
         // Initialize grid layout. Retrieve using ID
         GridLayout grid = (GridLayout) findViewById(R.id.gridLayout01);
@@ -68,47 +91,105 @@ public class MainActivity extends AppCompatActivity {
 
                 // Add TextView to the grid and to cell_tvs
                 grid.addView(tv, lp);
+
+                int id = Integer.parseInt(Integer.toString(i) + Integer.toString(j));
+
+                // Set ID to check cells later
+                tv.setId(id);
                 cell_tvs.add(tv);
 
                 // Check if the current cell is a mine and add it to a new ArrayList for checking later
                 if (this.checkIfMine(i,j)){
                     mine_tvs.add(tv);
                 }
+
+                // Add to cell status hashmap
+                cellStatus.put(tv, "close");
+
             }
+        }
+
+        // Retrieve TV of mode by id and set onClick
+        TextView mode = findViewById(R.id.mode);
+        mode.setOnClickListener(this::onClickMode);
+
+        // Set flag text
+        TextView flag = findViewById(R.id.flagCount);
+        flag.setText(Integer.toString(this.numFlags));
+    }
+
+    private void onClickMode(View view){
+        TextView tv = (TextView) view;
+
+        if (tv.getText() == getString(R.string.pickaxe)){
+            tv.setText(getString(R.string.flag));
+            this.mode = "flag";
+        } else {
+            tv.setText(getString(R.string.pickaxe));
+            this.mode = "pick";
         }
     }
 
     public void onClickTV(View view){
 
+        // Handle according to the mode of the game
+
         TextView tv = (TextView) view;
-        int n = findIndexOfCellTextView(tv);
-        int i = n/COLUMN_COUNT;
-        int j = n%COLUMN_COUNT;
+
+        if (this.mode == "pick") {
+            System.out.println(tv.getId());
+            int n = findIndexOfCellTextView(tv);
+            int i = n/COLUMN_COUNT;
+            int j = n%COLUMN_COUNT;
 
 
-        // Check if Mine is present
-        int[] mine = new int[2];
-        mine[0] = i;
-        mine[1] = j;
+            // Check if Mine is present
+            int[] mine = new int[2];
+            mine[0] = i;
+            mine[1] = j;
 
-        System.out.println("HEllo: " + mine[0] + mine[1]);
-        Boolean minePresent = this.checkIfPresent(mine);
+            System.out.println("Hello: " + mine[0] + mine[1]);
+            Boolean minePresent = this.checkIfPresent(mine);
 
-        // Activate handlers depending on whether there is a mine or not
-        if (minePresent){
-            this.mineHandler();
+            // Activate handlers depending on whether there is a mine or not
+            if (minePresent){
+                this.mineHandler();
+            } else {
+                this.emptyHandler(tv, i, j);
+            }
         } else {
-            this.emptyHandler(tv, i, j);
-        }
-    }
 
-    private int findIndexOfCellTextView(TextView tv) {
+            // If flag is not present --> Add flag and add tv to selectedMines
+            if (tv.getText() != getString(R.string.flag)){
+                this.numFlags -= 1;
+                this.selectedMines.add(tv);
+                storedText.put(tv, (String) tv.getText());
+                tv.setText(getString(R.string.flag));
+                tv.setBackgroundColor(Color.GRAY);
 
-        for (int n=0; n<cell_tvs.size(); n++) {
-            if (cell_tvs.get(n) == tv)
-                return n;
+                // Update FlagCount
+                TextView flagCount = findViewById(R.id.flagCount);
+                flagCount.setText(Integer.toString(this.numFlags));
+
+
+                // Function to check if game is over
+                // TODO: Implement functionality to check if the game is over
+                if (checkGameOver()){
+                    //
+                }
+            } else {
+
+                // If flag is present --> Remove flag and remove tv from selectedMines
+                this.numFlags += 1;
+                this.selectedMines.remove(tv);
+                tv.setText(storedText.get(tv));
+                tv.setBackgroundColor(Color.GRAY);
+
+                // Update FlagCount
+                TextView flagCount = findViewById(R.id.flagCount);
+                flagCount.setText(Integer.toString(this.numFlags));
+            }
         }
-        return -1;
     }
 
 
@@ -144,6 +225,338 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("HELP:" + mineArray);
     }
 
+    // Function to handle when user clicks on mines
+    public void mineHandler(){
+        // TODO: End Game/Restart Game
+
+
+        for (TextView tv: mine_tvs){
+            tv.setText("\uD83D\uDCA3");
+            if (tv.getCurrentTextColor() == Color.GRAY) {
+                tv.setTextColor(Color.GREEN);
+                tv.setBackgroundColor(Color.parseColor("red"));
+            }
+        }
+    }
+
+    // Function to handle when user clicks on safe spot
+    public void emptyHandler(TextView tv, int i, int j){
+
+        // Check the number of mines around cell
+        int noOfMines = noOfMinesAroundCell(i, j);
+
+        // Set the number to the no. of bombs around
+
+        // If num of bombs > 0, show num. Else Transitive opening
+        if (noOfMines > 0){
+            tv.setText(Integer.toString(noOfMines));
+            tv.setTextColor(Color.GRAY);
+            tv.setBackgroundColor(Color.LTGRAY);
+        } else {
+            // Open current one
+            tv.setText("");
+            tv.setBackgroundColor(Color.LTGRAY);
+            this.recursiveOpening(tv,i,j);
+        }
+    }
+
+    private void recursiveOpening(TextView tv, int row, int col){
+
+
+
+//        System.out.println(cellStatus.get(tv));
+
+        // End if numOfMines around cell is != 0 or if cell is flagged
+        if ((noOfMinesAroundCell(row,col) != 0) || (tv.getText() == getString(R.string.flag)) || !isInGrid(row,col)){
+            return;
+        }
+        else {
+            // Recurse through all 8 directions
+            // Check N
+            if ((noOfMinesAroundCell(row-1, col) == 0) && isInGrid(row-1, col) && notOpen(row-1, col)){
+                int id = Integer.parseInt(Integer.toString(row-1) + Integer.toString(col));
+                for (TextView view : cell_tvs){
+                    if ((view.getId() == id) && (cellStatus.get(view) == "close")){
+                        System.out.println("I AM " + cellStatus.get(view));
+                        view.setText("");
+                        cellStatus.put(view, "open");
+                        view.setBackgroundColor(Color.LTGRAY);
+                        recursiveOpening(view, row - 1, col);
+                    }
+                }
+            }
+            else {
+
+                if (isInGrid(row-1, col)){
+
+                    int id = Integer.parseInt(Integer.toString(row-1) + Integer.toString(col));
+                    for (TextView view : cell_tvs) {
+                        if ((view.getId() == id) && (cellStatus.get(view) == "close")) {
+                            cellStatus.put(view, "open");
+                            view.setText(Integer.toString(noOfMinesAroundCell(row-1,col)));
+                            view.setBackgroundColor(Color.LTGRAY);;
+                        }
+                    }
+                }
+
+            }
+
+            // Check E
+            if ((noOfMinesAroundCell(row, col+1) == 0) && isInGrid(row,col+1) && notOpen(row, col+1)){
+                int id = Integer.parseInt(Integer.toString(row) + Integer.toString(col+1));
+                for (TextView view : cell_tvs){
+                    if ((view.getId() == id) && (cellStatus.get(view) == "close")){
+                        view.setText("");
+                        cellStatus.put(view, "open");
+                        view.setBackgroundColor(Color.LTGRAY);
+                        recursiveOpening(view, row, col+1);
+                    }
+                }
+            }
+            else {
+                if (isInGrid(row, col+1)) {
+                    int id = Integer.parseInt(Integer.toString(row) + Integer.toString(col+1));
+                    for (TextView view : cell_tvs) {
+                        if ((view.getId() == id) && (cellStatus.get(view) == "close")) {
+                            cellStatus.put(view, "open");
+                            view.setText(Integer.toString(noOfMinesAroundCell(row,col+1)));
+                            view.setBackgroundColor(Color.LTGRAY);;
+                        }
+                    }
+                }
+
+            }
+
+            // Check S
+            if ((noOfMinesAroundCell(row+1, col) == 0) && isInGrid(row+1, col) && notOpen(row+1, col)){
+                int id = Integer.parseInt(Integer.toString(row+1) + Integer.toString(col));
+                for (TextView view : cell_tvs){
+                    if ((view.getId() == id) && (cellStatus.get(view) == "close")){
+                        System.out.println("I AM " + cellStatus.get(view));
+                        view.setText("");
+                        cellStatus.put(view, "open");
+                        view.setBackgroundColor(Color.LTGRAY);
+                        recursiveOpening(view, row + 1, col);
+                    }
+                }
+            }
+            else {
+                if (isInGrid(row+1, col)) {
+                    int id = Integer.parseInt(Integer.toString(row+1) + Integer.toString(col));
+                    for (TextView view : cell_tvs) {
+                        if ((view.getId() == id) && (cellStatus.get(view) == "close")) {
+                            cellStatus.put(view, "open");
+                            view.setText(Integer.toString(noOfMinesAroundCell(row+1,col)));
+                            view.setBackgroundColor(Color.LTGRAY);;
+                        }
+                    }
+                }
+
+            }
+
+            // Check W
+            if ((noOfMinesAroundCell(row, col-1) == 0) && isInGrid(row,col-1) && notOpen(row, col-1)){
+                System.out.println(col-1);
+                int id = Integer.parseInt(Integer.toString(row) + Integer.toString(col-1));
+                for (TextView view : cell_tvs){
+                    if ((view.getId() == id) && (cellStatus.get(view) == "close")){
+                        view.setText("");
+                        cellStatus.put(view, "open");
+                        view.setBackgroundColor(Color.LTGRAY);
+                        recursiveOpening(view, row, col-1);
+                    }
+                }
+            }
+            else {
+                if (isInGrid(row, col-1)) {
+
+                    int id = Integer.parseInt(Integer.toString(row) + Integer.toString(col-1));
+                    for (TextView view : cell_tvs) {
+                        if ((view.getId() == id) && (cellStatus.get(view) == "close")) {
+                            cellStatus.put(view, "open");
+                            view.setText(Integer.toString(noOfMinesAroundCell(row,col-1)));
+                            view.setBackgroundColor(Color.LTGRAY);;
+                        }
+                    }
+                }
+
+            }
+
+            // Check NE
+            if ((noOfMinesAroundCell(row-1, col+1) == 0) && isInGrid(row-1,col+1) && notOpen(row-1, col+1)){
+                int id = Integer.parseInt(Integer.toString(row-1) + Integer.toString(col+1));
+                for (TextView view : cell_tvs){
+                    if ((view.getId() == id) && (cellStatus.get(view) == "close")){
+                        view.setText("");
+                        cellStatus.put(view, "open");
+                        view.setBackgroundColor(Color.LTGRAY);
+                        recursiveOpening(view, row-1, col+1);
+                    }
+                }
+            }
+            else {
+                if (isInGrid(row-1, col+1)) {
+
+                    int id = Integer.parseInt(Integer.toString(row-1) + Integer.toString(col+1));
+                    for (TextView view : cell_tvs) {
+                        if ((view.getId() == id) && (cellStatus.get(view) == "close")) {
+                            cellStatus.put(view, "open");
+                            view.setText(Integer.toString(noOfMinesAroundCell(row-1,col+1)));
+                            view.setBackgroundColor(Color.LTGRAY);;
+                        }
+                    }
+                }
+
+            }
+
+            // Check SE
+            if ((noOfMinesAroundCell(row+1, col+1) == 0) && isInGrid(row+1,col+1) && notOpen(row+1, col+1)){
+                int id = Integer.parseInt(Integer.toString(row+1) + Integer.toString(col+1));
+                for (TextView view : cell_tvs){
+                    if ((view.getId() == id) && (cellStatus.get(view) == "close")){
+                        view.setText("");
+                        cellStatus.put(view, "open");
+                        view.setBackgroundColor(Color.LTGRAY);
+                        recursiveOpening(view, row+1, col+1);
+                    }
+                }
+            }
+            else {
+                if (isInGrid(row+1, col+1)) {
+
+                    int id = Integer.parseInt(Integer.toString(row+1) + Integer.toString(col+1));
+                    for (TextView view : cell_tvs) {
+                        if ((view.getId() == id) && (cellStatus.get(view) == "close")) {
+                            cellStatus.put(view, "open");
+                            view.setText(Integer.toString(noOfMinesAroundCell(row+1,col+1)));
+                            view.setBackgroundColor(Color.LTGRAY);;
+                        }
+                    }
+                }
+
+            }
+
+            // Check SW
+            if ((noOfMinesAroundCell(row+1, col-1) == 0) && isInGrid(row+1,col-1) && notOpen(row+1, col-1)){
+                int id = Integer.parseInt(Integer.toString(row+1) + Integer.toString(col-1));
+                for (TextView view : cell_tvs){
+                    if ((view.getId() == id) && (cellStatus.get(view) == "close")){
+                        view.setText("");
+                        cellStatus.put(view, "open");
+                        view.setBackgroundColor(Color.LTGRAY);
+                        recursiveOpening(view, row+1, col-1);
+                    }
+                }
+            }
+            else {
+                if (isInGrid(row+1, col-1)) {
+
+                    int id = Integer.parseInt(Integer.toString(row+1) + Integer.toString(col-1));
+                    for (TextView view : cell_tvs) {
+                        if ((view.getId() == id) && (cellStatus.get(view) == "close")) {
+                            cellStatus.put(view, "open");
+                            view.setText(Integer.toString(noOfMinesAroundCell(row+1,col-1)));
+                            view.setBackgroundColor(Color.LTGRAY);;
+                        }
+                    }
+                }
+
+            }
+
+            // Check NW
+            if ((noOfMinesAroundCell(row-1, col-1) == 0) && isInGrid(row-1,col-1) && notOpen(row-1, col-1)){
+                int id = Integer.parseInt(Integer.toString(row-1) + Integer.toString(col-1));
+                for (TextView view : cell_tvs){
+                    if ((view.getId() == id) && (cellStatus.get(view) == "close")){
+                        view.setText("");
+                        cellStatus.put(view, "open");
+                        view.setBackgroundColor(Color.LTGRAY);
+                        recursiveOpening(view, row-1, col-1);
+                    }
+                }
+            }
+            else {
+                if (isInGrid(row-1, col-1)) {
+
+                    int id = Integer.parseInt(Integer.toString(row-1) + Integer.toString(col-1));
+                    for (TextView view : cell_tvs) {
+                        if ((view.getId() == id) && (cellStatus.get(view) == "close")) {
+                            cellStatus.put(view, "open");
+                            view.setText(Integer.toString(noOfMinesAroundCell(row-1,col-1)));
+                            view.setBackgroundColor(Color.LTGRAY);;
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    // HELPER FUNCTIONS
+
+    // Check if game is over
+    private boolean checkGameOver(){
+
+        int sum = 0;
+
+        for (TextView tv : selectedMines){
+            for (TextView mine_tv : mine_tvs){
+                if (tv == mine_tv){
+                    sum += 1;
+                }
+            }
+        }
+
+        if (sum == 4){
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    // To check if the cell is open or closed
+    private boolean notOpen(int row, int col){
+        int id = Integer.parseInt(Integer.toString(row) + Integer.toString(col));
+        for (TextView view : cell_tvs){
+            if ((view.getId() == id) && (cellStatus.get(view) == "close")){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Check if coordinates is in the grid
+    private boolean isInGrid(int i, int j){
+        if (i < 0 || i > 9){
+            return false;
+        } else if (j < 0 || j > 7){
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    // Function to check the number of mines while receiving row and col as input
+    private int noOfMinesAroundCell(int i, int j){
+        int sumOfMines = 0;
+
+        for (int[] mine: mineArray){
+            int row = mine[0];
+            int col = mine[1];
+
+            // Check if all directions have mines
+            if ((i == row) || (i+1 == row) || (i-1 == row)){
+                if ((j == col) || (j+1 == col) || (j-1 == col)){
+                    sumOfMines += 1;
+                }
+            }
+        }
+        return sumOfMines;
+
+    }
+
     // Function to check if the current cell is a mine
     private Boolean checkIfMine(int i, int j){
         for (int[] mine: mineArray){
@@ -172,52 +585,14 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    // Function to handle when user clicks on mines
-    public void mineHandler(){
-        // TODO: End Game/Restart Game
+    // Function to check index of cell using TextView
+    private int findIndexOfCellTextView(TextView tv) {
 
-
-        for (TextView tv: mine_tvs){
-            tv.setText("\uD83D\uDCA3");
-            if (tv.getCurrentTextColor() == Color.GRAY) {
-                tv.setTextColor(Color.GREEN);
-                tv.setBackgroundColor(Color.parseColor("red"));
-            }
+        for (int n=0; n<cell_tvs.size(); n++) {
+            if (cell_tvs.get(n) == tv)
+                return n;
         }
-    }
-
-    // Function to handle when user clicks on safe spot
-    public void emptyHandler(TextView tv, int i, int j){
-
-        // TODO: Transitively reveal all adjacent cells
-
-        // Check the number of mines around cell
-        int noOfMines = noOfMinesAroundCell(i, j);
-
-        // Set the number to the no. of bombs around
-        tv.setText(Integer.toString(noOfMines));
-        tv.setTextColor(Color.GRAY);
-        tv.setBackgroundColor(Color.LTGRAY);
-
-    }
-
-    // Function to check the number of mines while receiving row and col as input
-    public int noOfMinesAroundCell(int i, int j){
-        int sumOfMines = 0;
-
-        for (int[] mine: mineArray){
-            int row = mine[0];
-            int col = mine[1];
-
-            // Check if all directions have mines
-            if ((i == row) || (i+1 == row) || (i-1 == row)){
-                if ((j == col) || (j+1 == col) || (j-1 == col)){
-                    sumOfMines += 1;
-                }
-            }
-        }
-        return sumOfMines;
-
+        return -1;
     }
 
 }
