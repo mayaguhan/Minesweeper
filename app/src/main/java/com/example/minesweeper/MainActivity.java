@@ -233,7 +233,9 @@ public class MainActivity extends AppCompatActivity {
         // Generate random number
         Random rand = new Random();
 
-        for (int i=0; i<4; i++){
+
+        // Generate mines until numMines == numFlags
+        while (mineArray.size() != numFlags){
 
             // Int array to store coordinates of a mine
             int[] singleMine = new int[2];
@@ -249,8 +251,14 @@ public class MainActivity extends AppCompatActivity {
 
             System.out.print(y + " " + x);
 
-            // Add single mine to mines array
-            mineArray.add(singleMine);
+
+            // Only add the mine if it is unique
+            if (!mineArray.contains(singleMine)){
+                // Add single mine to mines array
+                mineArray.add(singleMine);
+            }
+
+
         }
 
         System.out.println("HELP:" + mineArray);
