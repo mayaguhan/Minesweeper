@@ -206,6 +206,7 @@ public class MainActivity extends AppCompatActivity {
                 if (checkGameWon() && numFlags == 0){
                     this.gameOver = true;
                     this.gameStatus = true;
+                    this.running = false;
                 }
             } else {
 
@@ -281,6 +282,7 @@ public class MainActivity extends AppCompatActivity {
 
         // End Game. Game over
         this.gameOver = true;
+        this.running = false;
 
 
     }
