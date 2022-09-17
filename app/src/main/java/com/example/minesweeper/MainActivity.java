@@ -27,6 +27,12 @@ public class MainActivity extends AppCompatActivity {
     // Column count to derive position later
     private static final int COLUMN_COUNT = 8;
 
+    // Track the number of flags
+    int numFlags = 4;
+
+    // Track the number of mines
+    int numMines = 4;
+
     // Array to save TVs
     private ArrayList<TextView> cell_tvs;
 
@@ -53,8 +59,11 @@ public class MainActivity extends AppCompatActivity {
     // To track mode of the game
     private String mode = "pick";
 
-    // Track the number of flags
-    int numFlags = 4;
+    // Boolean to keep track if game is over
+    boolean gameOver = false;
+
+    // Boolean to keep track of gameStatus
+    boolean gameStatus = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,8 +163,11 @@ public class MainActivity extends AppCompatActivity {
             runTimer();
         }
 
+        if (gameOver){
+            redirect(view);
+        }
+
         if (this.mode == "pick") {
-            System.out.println(tv.getId());
             int n = findIndexOfCellTextView(tv);
             int i = n/COLUMN_COUNT;
             int j = n%COLUMN_COUNT;
@@ -166,7 +178,6 @@ public class MainActivity extends AppCompatActivity {
             mine[0] = i;
             mine[1] = j;
 
-            System.out.println("Hello: " + mine[0] + mine[1]);
             Boolean minePresent = this.checkIfPresent(mine);
 
             // Activate handlers depending on whether there is a mine or not
@@ -193,10 +204,8 @@ public class MainActivity extends AppCompatActivity {
                 // Function to check if game is over
                 // TODO: Implement functionality to check if the game is over
                 if (checkGameWon() && numFlags == 0){
-                    Intent intent = new Intent(view.getContext(), EndGame.class);
-                    intent.putExtra("gameStatus", true);
-                    intent.putExtra("timer",clock);
-                    startActivity(intent);
+                    this.gameOver = true;
+                    this.gameStatus = true;
                 }
             } else {
 
@@ -213,10 +222,8 @@ public class MainActivity extends AppCompatActivity {
                     flagCount.setText(Integer.toString(this.numFlags));
 
                     if (checkGameWon() && numFlags == 0){
-                        Intent intent = new Intent(view.getContext(), EndGame.class);
-                        intent.putExtra("gameStatus", true);
-                        intent.putExtra("timer",clock);
-                        startActivity(intent);
+                        this.gameOver = true;
+                        this.gameStatus = true;
                     }
                 }
             }
@@ -249,19 +256,14 @@ public class MainActivity extends AppCompatActivity {
             int x = rand.nextInt(8);
             singleMine[1] = x;
 
-            System.out.print(y + " " + x);
-
-
             // Only add the mine if it is unique
-            if (!mineArray.contains(singleMine)){
+            if (!checkIfMinePresent(singleMine)){
                 // Add single mine to mines array
                 mineArray.add(singleMine);
             }
 
 
         }
-
-        System.out.println("HELP:" + mineArray);
     }
 
     // Function to handle when user clicks on mines
@@ -278,11 +280,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // End Game. Game over
-
-        Intent intent = new Intent(this, EndGame.class);
-        intent.putExtra("gameStatus", false);
-        intent.putExtra("timer",clock);
-        startActivity(intent);
+        this.gameOver = true;
 
 
     }
@@ -308,11 +306,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Function to recursively open adjacent cells
     private void recursiveOpening(TextView tv, int row, int col){
 
-
-
-//        System.out.println(cellStatus.get(tv));
 
         // End if numOfMines around cell is != 0 or if cell is flagged
         if ((noOfMinesAroundCell(row,col) != 0) || (tv.getText() == getString(R.string.flag)) || !isInGrid(row,col)){
@@ -325,7 +321,6 @@ public class MainActivity extends AppCompatActivity {
                 int id = Integer.parseInt(Integer.toString(row-1) + Integer.toString(col));
                 for (TextView view : cell_tvs){
                     if ((view.getId() == id) && (cellStatus.get(view) == "close")){
-                        System.out.println("I AM " + cellStatus.get(view));
                         view.setText("");
                         cellStatus.put(view, "open");
                         view.setBackgroundColor(Color.LTGRAY);
@@ -380,7 +375,6 @@ public class MainActivity extends AppCompatActivity {
                 int id = Integer.parseInt(Integer.toString(row+1) + Integer.toString(col));
                 for (TextView view : cell_tvs){
                     if ((view.getId() == id) && (cellStatus.get(view) == "close")){
-                        System.out.println("I AM " + cellStatus.get(view));
                         view.setText("");
                         cellStatus.put(view, "open");
                         view.setBackgroundColor(Color.LTGRAY);
@@ -404,7 +398,6 @@ public class MainActivity extends AppCompatActivity {
 
             // Check W
             if ((noOfMinesAroundCell(row, col-1) == 0) && isInGrid(row,col-1) && notOpen(row, col-1)){
-                System.out.println(col-1);
                 int id = Integer.parseInt(Integer.toString(row) + Integer.toString(col-1));
                 for (TextView view : cell_tvs){
                     if ((view.getId() == id) && (cellStatus.get(view) == "close")){
@@ -540,7 +533,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // HELPER FUNCTIONS
+    /// HELPER FUNCTIONS ///
+
+    // Check if the mine is already present in the generated mines
+    private boolean checkIfMinePresent(int[] singleMine){
+
+        int x = singleMine[0];
+        int y = singleMine[1];
+
+        for (int[] mine : mineArray){
+            int currX = mine[0];
+            int currY = mine[1];
+
+            if (x == currX && y == currY){
+                return true;
+            }
+        }
+
+        return false;
+
+    }
 
     // Check if game is over
     private boolean checkGameWon(){
@@ -555,7 +567,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        if (sum == 4){
+        System.out.println(this.numFlags);
+        if (sum == this.numMines){
             return true;
         } else {
             return false;
@@ -668,6 +681,14 @@ public class MainActivity extends AppCompatActivity {
                 handler.postDelayed(this, 1000);
             }
         });
+    }
+
+    // Function to redirect to new page
+    private void redirect(View view){
+        Intent intent = new Intent(view.getContext(), EndGame.class);
+        intent.putExtra("gameStatus", this.gameStatus);
+        intent.putExtra("timer",clock);
+        startActivity(intent);
     }
 
 
