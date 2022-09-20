@@ -9,7 +9,7 @@
     android:layout_marginBottom="2dp"
     android:height="22dp"
     android:width="22dp"
-    android:text="00"
+    android:text=""
     android:textSize="10sp"
     android:textAlignment="center">
 </TextView>
