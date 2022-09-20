@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                 TextView tv = (TextView) li.inflate(R.layout.custom_cell_layout, grid, false);
                 //tv.setText(String.valueOf(i)+String.valueOf(j));
                 tv.setTextColor(Color.GRAY);
-                tv.setBackgroundColor(Color.GRAY);
+                tv.setBackgroundColor(Color.GREEN);
                 tv.setOnClickListener(this::onClickTV);
 
                 GridLayout.LayoutParams lp = (GridLayout.LayoutParams) tv.getLayoutParams();
@@ -194,7 +194,6 @@ public class MainActivity extends AppCompatActivity {
                 this.selectedMines.add(tv);
                 storedText.put(tv, (String) tv.getText());
                 tv.setText(getString(R.string.flag));
-                tv.setBackgroundColor(Color.GRAY);
 
                 // Update FlagCount
                 TextView flagCount = findViewById(R.id.flagCount);
@@ -216,7 +215,6 @@ public class MainActivity extends AppCompatActivity {
                     this.numFlags += 1;
                     this.selectedMines.remove(tv);
                     tv.setText(storedText.get(tv));
-                    tv.setBackgroundColor(Color.GRAY);
 
                     // Update FlagCount
                     TextView flagCount = findViewById(R.id.flagCount);
